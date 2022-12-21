@@ -132,7 +132,7 @@ int decrypt_argus(const char *x_argus) {
     }
 
     ByteBuf pb_ba(protobuf, new_len);
-    pb_ba.remove_padding();
+//    pb_ba.remove_padding();
 
     std::cout << "protobuf:\n" << Hexdump(pb_ba.data(), pb_ba.size()) << std::endl;
     return 0;

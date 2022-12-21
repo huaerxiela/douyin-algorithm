@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+//package aweme.argus;
+//
+//option java_package = "com.reacg.protobuf.argus";
+
+message Argus {
+  int32 magic = 1;
+  int32 version = 2;
+  int64 rand = 3;
+  string msAppID = 4;
+  optional string deviceID = 5;
+  string licenseID = 6;
+  string appVersion = 7;
+  string sdkVersionStr = 8;
+  int32 sdkVersion = 9;
+  bytes envCode = 10;
+  optional string platform = 11;
+  int64 createTime = 12;
+  optional bytes bodyHash = 13; // sm3(x-ss-stub)[:6]
+  optional bytes queryHash = 14; // sm3(query_string)[:6]
+  AlgorithmCount algorithmCount = 15;
+  optional string secDeviceToken = 16;
+  optional int64 isAppLicense = 17;
+  optional string pskHash = 18;
+  optional int32 pskCalHash = 19;
+  string pskVersion = 20;
+  int32 callType = 21;
+}
+
+message AlgorithmCount {
+  int32 signCount = 1;
+  int32 reportCount = 2;
+  int32 settingCount = 3;
+}
