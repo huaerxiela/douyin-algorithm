@@ -92,9 +92,9 @@ int decrypt_argus(const char *x_argus) {
     uint32_t len = ba.size();
     uint16_t rand_left = *(uint16_t *)&ba.data()[len - 2];
 
-    uint32_t rand = rand_left;
-    rand = rand << 16 | rand_right;
-    printf("%x %x random=%x\n", rand_right, rand_left, rand);
+    uint32_t random_num = rand_left;
+    random_num = random_num << 16 | rand_right;
+    printf("%x %x random=%x\n", rand_right, rand_left, random_num);
 
     uint32_t bsize = len-9-2;
     auto *b_buffer = new uint8_t[bsize];
@@ -108,7 +108,7 @@ int decrypt_argus(const char *x_argus) {
     auto size = sign_key.size() + 4 + sign_key.size();
     sh::ByteBuf sm3Buf;
     sm3Buf.writeBytes(sign_key.data(), sign_key.size());
-    sm3Buf.writeBytes(reinterpret_cast<const char *>(&rand), 4);
+    sm3Buf.writeBytes(reinterpret_cast<const char *>(&random_num), 4);
     sm3Buf.writeBytes(sign_key.data(), sign_key.size());
     unsigned char sm3_output[32] = {0};
     sm3((unsigned char *) sm3Buf.data(), size, sm3_output);
@@ -138,6 +138,63 @@ int decrypt_argus(const char *x_argus) {
     return 0;
 }
 
-int encrypt_argus() {
+int encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
+
+//    auto sign_key = base64_decode(std::string("jr36OAbsxc7nlCPmAp7YJUC8Ihi7fq73HLaR96qKovU="));
+    auto sign_key = base64_decode(std::string("rBrarpWnr5SlEUqzs6l92ABQqgo5MUxAUoyuyVJWwow="));
+    uint8_t aes_key[16] = {0};
+    uint8_t aes_iv[16] = {0};
+    md5((uint8_t *)sign_key.data(), 16, aes_key);
+    md5((uint8_t *)sign_key.data() + 16, 16, aes_iv);
+
+    uint32_t random_num = 0x33334444;
+
+
+    // sm3(sign_key + random + sign_key)
+    auto size = sign_key.size() + 4 + sign_key.size();
+    sh::ByteBuf sm3Buf;
+    sm3Buf.writeBytes(sign_key.data(), sign_key.size());
+    sm3Buf.writeBytes(reinterpret_cast<const char *>(&random_num), 4);
+    sm3Buf.writeBytes(sign_key.data(), sign_key.size());
+    unsigned char sm3_output[32] = {0};
+    sm3((unsigned char *) sm3Buf.data(), size, sm3_output);
+
+    uint64_t key[] = {0, 0, 0, 0};
+    memcpy(key, sm3_output, 32);
+
+
+    uint32_t loop_count = (protobuf_size / 16) + (protobuf_size % 16 > 0 ? 1 : 0);
+    ByteBuf byteBuf(loop_count * 16);
+    memset(byteBuf.data(), 0x0f, byteBuf.size());
+    memcpy(byteBuf.data(), protobuf, protobuf_size);
+
+
+    for (int i = 0; i < loop_count; ++i) {
+        uint64_t ct[2] = {0, 0};
+        uint64_t pt[2] = {0, 0}; // 加密填充这个
+
+        memcpy(&pt[0], &byteBuf.data()[i * 16], 8);
+        memcpy(&pt[1], &byteBuf.data()[i * 16 + 8], 8);
+
+        uint8_t line[16];
+        simon_enc(pt, ct, key);
+
+        memcpy(&line[0], &ct[0], 8);
+        memcpy(&line[8], &ct[1], 8);
+
+        std::cout << Hexdump(line, 16) << std::endl;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
     return 0;
 }
