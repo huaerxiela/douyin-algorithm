@@ -138,7 +138,7 @@ int decrypt_argus(const char *x_argus) {
     return 0;
 }
 
-int encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
+std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
 
 //    auto sign_key = base64_decode(std::string("jr36OAbsxc7nlCPmAp7YJUC8Ihi7fq73HLaR96qKovU="));
     auto sign_key = base64_decode(std::string("rBrarpWnr5SlEUqzs6l92ABQqgo5MUxAUoyuyVJWwow="));
@@ -162,12 +162,10 @@ int encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
     uint64_t key[] = {0, 0, 0, 0};
     memcpy(key, sm3_output, 32);
 
-
     uint32_t loop_count = (protobuf_size / 16) + (protobuf_size % 16 > 0 ? 1 : 0);
     ByteBuf byteBuf(loop_count * 16);
     memset(byteBuf.data(), 0x0f, byteBuf.size());
     memcpy(byteBuf.data(), protobuf, protobuf_size);
-
 
     for (int i = 0; i < loop_count; ++i) {
         uint64_t ct[2] = {0, 0};
@@ -185,16 +183,5 @@ int encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
         std::cout << Hexdump(line, 16) << std::endl;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-    return 0;
+    return "";
 }

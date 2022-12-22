@@ -5,14 +5,10 @@
 #ifndef ALGORITHM_ARGUS_H
 #define ALGORITHM_ARGUS_H
 #include <iostream>
-
-
-class argus {
-
-};
+#include <string>
 
 int decrypt_argus(const char *argus);
-int encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size);
+std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size);
 
 
 #endif //ALGORITHM_ARGUS_H
