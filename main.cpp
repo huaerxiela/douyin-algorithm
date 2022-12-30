@@ -5,11 +5,10 @@
 #include "argus.h"
 #include "defs.h"
 #include "ladon.h"
-
-extern "C" {
-#include "md5.h"
-#include "simon.h"
-}
+#include "aes.hpp"
+#include "hexdump.hpp"
+extern "C"
+#include "crypto/pkcs7_padding.h"
 
 
 int show_size() {
@@ -95,11 +94,62 @@ int get_random() {
     return 0;
 }
 
+int test_ladon() {
+    std::string ladon = make_ladon(1670385975);
+    std::cout << "ladon " << ladon << std::endl;
+    return 0;
+}
+
+int test_argus() {
+    const char *argus[] = {
+//            "wni3DJwEiI+HxHUBV7pRPrlbBVHGWB0RLrn7nDZpkgT/7b7yUnNoVRYNacd+enlrqS/1/SJZ5peIWg8VIVaXj0mgYHLjK0rGwozg+11YG1QIFo8ABvRjVgo19d2zk2s8Kl8Tuvw5xpScKcTRHW9KpX5IiCTxo/YVdDXipJFgiI/41XgVLQ6Xeb6idXWLtCyt7k/Qt54B50bT1hQ5VcVy0pZufF/4/4Ehd1+L7sHBBHQQsA==",
+//            "VlMKbTQsAIy4ORbvTJviXPX7vhiGcmQPBKnlyYShf0cwJ4voq++9uwan82uPkQ/I6NhvUA5jCq5QVddN0gEIcTIpKicQVVTHQVwDv33Inn1RFCpK3/DA8TRhaeF4hFSrtlFMb4DFMOqA976S6yrPxgeSdWr9DI9EwYhbyNSGX9RHRW5YKSckBS0JrDK/B2Iv2R4WcIt5WkVwu8a+3WmQHaxXMXvpzAZiVtzuXxI8SNJZ6gIk62MIXOOIZEA3BHxFUQJNyIuG5UETTukp2HieOFc8",
+//            "cQKgXKGLXaNm/ndNh695cdi3aUj4rh9roQZXJw6iNO1RD7//sNmsFNCOgiGPwu2qMxDbPvb7NNnrQbEah2KUY2O+wGivO6C32EIvkyY1WR0BfCv4KEMukqyK+ieWcltN5P2+D+k/nq8tAkSLDObOIcCxCti9NfATJUeezKfxNF4ws0cKn0RRtjjNfEaeOg33Cdze/3SeVhS4cWSyb31PYpdzMh5ldkUd55VFhbDSGRuboL75Q+SDOprXeqqIkYXMLo3W/TASHS1gBkuM1UUcJBka",
+            "+FT5llXVSaCkCWpbSkokeJ77sKJDGjWb8jH6nvzUot7LDDbLJWWTvZHju4fAqI2iaO/yKmfwXGgnJIQIU4yzkbSPsqOwdMXPkq67KJoLuWAcI4ZcU158OuHSG8aBkrk5uJ9wmhNpSX5wl9sUO5/+TC2kwn10F4LohAO/vCCrzApbTkrkEmSBMLloTtugU6lXOpBOwyGri8Q0o1ZGmgtd2r26qo0i24cPW+1WnbyvyMDB7kgn5oNx+4jsj1EzUr+ONjVcwFJeDnuFpiSEfqk5+2v6",
+    };
+    for (int i = 0; i < sizeof(argus) / sizeof (argus[0]); ++i) {
+        decrypt_argus(argus[i]);
+        printf("\n\n\n\n");
+    }
+    return 0;
+}
+
+
+void test_aes_cbc_decrypt() {
+
+//    uint8_t data[] = {
+//            0x5d,0x87,0x43,0xe5,0xc6,0x68,0x3b,0x38,0x6a,0x40,0xd8,0x1e,0x72,0xac,0x50,0x7b
+//    };
+//    const char *key_iv = "0000000000000000";
+//    uint8_t *key = (uint8_t*)key_iv;
+//    uint8_t *iv = (uint8_t*)key_iv;
+//    AES_ctx ctx;
+//    AES_init_ctx_iv(&ctx, key, iv);
+//    AES_CBC_decrypt_buffer(&ctx, data, 16);
+
+
+    uint8_t buffer[32] = {0x31};
+
+
+    std::cout << Hexdump(buffer, sizeof buffer) << std::endl;
+
+    pkcs7_padding_pad_buffer(buffer, 1, 15, 16);
+
+
+    std::cout << Hexdump(buffer, sizeof buffer) << std::endl;
+
+
+}
+
+
 
 int main() {
     get_random();
+//    test_argus();
 
-    unsigned char protobuf[129] = {
+    test_aes_cbc_decrypt();
+
+    unsigned char protobuf[] = {
             0x08, 0xD2, 0xA4, 0x80, 0x82, 0x04, 0x10, 0x02, 0x18, 0xC4, 0x88, 0x89, 0x91, 0x02, 0x22, 0x04,
             0x33, 0x30, 0x31, 0x39, 0x32, 0x0A, 0x31, 0x36, 0x31, 0x31, 0x39, 0x32, 0x31, 0x37, 0x36, 0x34,
             0x3A, 0x06, 0x32, 0x33, 0x2E, 0x32, 0x2E, 0x30, 0x42, 0x14, 0x76, 0x30, 0x34, 0x2E, 0x30, 0x34,
@@ -112,19 +162,5 @@ int main() {
     };
     encrypt_argus(protobuf, sizeof(protobuf));
 
-    const char *argus[] = {
-//            "wni3DJwEiI+HxHUBV7pRPrlbBVHGWB0RLrn7nDZpkgT/7b7yUnNoVRYNacd+enlrqS/1/SJZ5peIWg8VIVaXj0mgYHLjK0rGwozg+11YG1QIFo8ABvRjVgo19d2zk2s8Kl8Tuvw5xpScKcTRHW9KpX5IiCTxo/YVdDXipJFgiI/41XgVLQ6Xeb6idXWLtCyt7k/Qt54B50bT1hQ5VcVy0pZufF/4/4Ehd1+L7sHBBHQQsA==",
-//            "VlMKbTQsAIy4ORbvTJviXPX7vhiGcmQPBKnlyYShf0cwJ4voq++9uwan82uPkQ/I6NhvUA5jCq5QVddN0gEIcTIpKicQVVTHQVwDv33Inn1RFCpK3/DA8TRhaeF4hFSrtlFMb4DFMOqA976S6yrPxgeSdWr9DI9EwYhbyNSGX9RHRW5YKSckBS0JrDK/B2Iv2R4WcIt5WkVwu8a+3WmQHaxXMXvpzAZiVtzuXxI8SNJZ6gIk62MIXOOIZEA3BHxFUQJNyIuG5UETTukp2HieOFc8",
-//            "cQKgXKGLXaNm/ndNh695cdi3aUj4rh9roQZXJw6iNO1RD7//sNmsFNCOgiGPwu2qMxDbPvb7NNnrQbEah2KUY2O+wGivO6C32EIvkyY1WR0BfCv4KEMukqyK+ieWcltN5P2+D+k/nq8tAkSLDObOIcCxCti9NfATJUeezKfxNF4ws0cKn0RRtjjNfEaeOg33Cdze/3SeVhS4cWSyb31PYpdzMh5ldkUd55VFhbDSGRuboL75Q+SDOprXeqqIkYXMLo3W/TASHS1gBkuM1UUcJBka",
-            "+FT5llXVSaCkCWpbSkokeJ77sKJDGjWb8jH6nvzUot7LDDbLJWWTvZHju4fAqI2iaO/yKmfwXGgnJIQIU4yzkbSPsqOwdMXPkq67KJoLuWAcI4ZcU158OuHSG8aBkrk5uJ9wmhNpSX5wl9sUO5/+TC2kwn10F4LohAO/vCCrzApbTkrkEmSBMLloTtugU6lXOpBOwyGri8Q0o1ZGmgtd2r26qo0i24cPW+1WnbyvyMDB7kgn5oNx+4jsj1EzUr+ONjVcwFJeDnuFpiSEfqk5+2v6",
-    };
-    for (int i = 0; i < sizeof(argus) / sizeof (argus[0]); ++i) {
-        decrypt_argus(argus[i]);
-        printf("\n\n\n\n");
-    }
-
-
-//    std::string ladon = make_ladon(1670385975);
-//    std::cout << "ladon " << ladon << std::endl;
     return 0;
 }

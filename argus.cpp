@@ -185,8 +185,10 @@ std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
 
     uint32_t buffer_size = padding_size(protobuf_size);
     ByteBuf byteBuf(buffer_size);
-    memset(byteBuf.data(), 0x0f, buffer_size);
     memcpy(byteBuf.data(), protobuf, protobuf_size);
+
+    pkcs7_padding_pad_buffer(byteBuf.data(), protobuf_size, buffer_size, 16);
+    std::cout << "padding protobuf buffer" << Hexdump(byteBuf.data(), buffer_size) << std::endl;
 
     for (int i = 0; i < (buffer_size/16); ++i) {
         uint64_t ct[2] = {0, 0};
