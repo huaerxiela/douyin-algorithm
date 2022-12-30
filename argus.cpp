@@ -194,8 +194,7 @@ std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
         uint64_t ct[2] = {0, 0}; // 解密填充这个
         uint64_t pt[2] = {ptr[0], ptr[1]}; // 加密填充这个
         simon_enc(pt, ct, key);
-        memcpy(&byteBuf.data()[i * 16], &ct[0], 8);
-        memcpy(&byteBuf.data()[i * 16 + 8], &ct[1], 8);
+        memcpy(ptr, &ct, sizeof ct);
     }
 
     std::cout << "protobuf enc:\n" << Hexdump(byteBuf.data(), buffer_size) << std::endl;
