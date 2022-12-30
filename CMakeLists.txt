@@ -9,7 +9,17 @@ find_package(Protobuf REQUIRED)
 include_directories(include)
 include_directories(crypto)
 
-add_executable(algorithm main.cpp ladon.cpp md5.c base64.cpp simon.c sm3.c argus.cpp ByteBuf.cpp pkcs7_padding.c crypto/aes.c)
+add_executable(algorithm
+        main.cpp
+        ladon.cpp
+        crypto/md5.c
+        crypto/base64.cpp
+        crypto/simon.c
+        crypto/sm3.c
+        argus.cpp
+        ByteBuf.cpp
+        crypto/pkcs7_padding.c
+        crypto/aes.c)
 
 #target_link_libraries(algorithm
 #        Protobuf::libprotobuf
