@@ -1,6 +1,10 @@
 #pragma once
 
 
+extern "C" {
+#include "pkcs7_padding.h"
+}
+
 class ByteBuf {
 private:
     uint8_t *mem = nullptr;
@@ -48,20 +52,11 @@ public:
     }
 
     uint32_t remove_padding() {
-        if ((data_size % 16) != 0) {
-            return 0;
+        auto padding_size = pkcs7_padding_data_length(mem, data_size, 16);
+        if (padding_size == 0) {
+            return data_size;
         }
-        uint8_t *end_pos = &mem[data_size];
-        uint8_t byte = *(end_pos-1);
-        for (int i = 0; i < 16; ++i) {
-            uint8_t end = *(--end_pos);
-            if (end != byte) {
-                end_pos++;
-                break;
-            }
-        }
-        data_size = end_pos-mem;
-
+        data_size = padding_size;
         auto dst = new uint8_t[data_size];
         std::memcpy(dst, mem, data_size);
         delete[] mem;

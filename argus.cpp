@@ -132,10 +132,20 @@ int decrypt_argus(const char *x_argus) {
     }
 
     ByteBuf pb_ba(protobuf, new_len);
-//    pb_ba.remove_padding();
+    pb_ba.remove_padding();
 
     std::cout << "protobuf:\n" << Hexdump(pb_ba.data(), pb_ba.size()) << std::endl;
     return 0;
+}
+
+uint32_t padding_size(uint32_t size) {
+    uint32_t mod = size % 16;
+    if (mod > 0) {
+        return size + (16 - mod);
+    }
+    return size;
+//    uint32_t loop_count = (size / 16) + (size % 16 > 0 ? 1 : 0);
+//    return loop_count * 16;
 }
 
 std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
@@ -149,7 +159,6 @@ std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
 
     uint32_t random_num = 0x33334444;
 
-
     // sm3(sign_key + random + sign_key)
     auto size = sign_key.size() + 4 + sign_key.size();
     sh::ByteBuf sm3Buf;
@@ -162,12 +171,12 @@ std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
     uint64_t key[] = {0, 0, 0, 0};
     memcpy(key, sm3_output, 32);
 
-    uint32_t loop_count = (protobuf_size / 16) + (protobuf_size % 16 > 0 ? 1 : 0);
-    ByteBuf byteBuf(loop_count * 16);
-    memset(byteBuf.data(), 0x0f, byteBuf.size());
+    uint32_t buffer_size = padding_size(protobuf_size);
+    ByteBuf byteBuf(buffer_size);
+    memset(byteBuf.data(), 0x0f, buffer_size);
     memcpy(byteBuf.data(), protobuf, protobuf_size);
 
-    for (int i = 0; i < loop_count; ++i) {
+    for (int i = 0; i < (buffer_size/16); ++i) {
         uint64_t ct[2] = {0, 0};
         uint64_t pt[2] = {0, 0}; // 加密填充这个
 
