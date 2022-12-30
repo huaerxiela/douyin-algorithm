@@ -9,10 +9,11 @@
 #include <iostream>
 extern "C" {
 #include "md5.h"
-#include "WjCryptLib_AesCbc.h"
 #include "sm3.h"
 #include "simon.h"
+#include "pkcs7_padding.h"
 }
+#include "aes.hpp"
 
 #include "bytearray.hpp"
 #include "bytearray_processor.hpp"
@@ -65,6 +66,31 @@ int decrypt_enc_pb(uint8_t *data, uint32_t len) {
 }
 
 
+uint32_t padding_size(uint32_t size) {
+    uint32_t mod = size % 16;
+    if (mod > 0) {
+        return size + (16 - mod);
+    }
+    return size;
+}
+
+std::string aes_cbc_decrypt(uint8_t *data, uint32_t len, uint8_t key[16], uint8_t iv[16]) {
+    std::string result;
+    result.resize(padding_size(len));
+    memcpy(result.data(), data, len);
+
+    AES_ctx ctx;
+    AES_init_ctx_iv(&ctx, key, iv);
+    AES_CBC_decrypt_buffer(&ctx, (uint8_t *) result.data(), result.size());
+
+    auto padding_size = pkcs7_padding_data_length(reinterpret_cast<uint8_t *>(result.data()), result.size(), 16);
+    if (padding_size == 0) {
+        return result;
+    }
+    return std::string(result.data(), padding_size);
+}
+
+
 int decrypt_argus(const char *x_argus) {
     auto argus = base64_decode(std::string(x_argus));
     uint16_t rand_right = *(uint16_t *)argus.data();
@@ -75,22 +101,17 @@ int decrypt_argus(const char *x_argus) {
     md5(reinterpret_cast<uint8_t *>(sign_key.data()), 16, aes_key);
     md5(reinterpret_cast<uint8_t *>(sign_key.data() + 16), 16, aes_iv);
 
-    std::string output;
-    output.resize(argus.size()-2);
+    std::string output = aes_cbc_decrypt(reinterpret_cast<uint8_t *>(argus.data() + 2), argus.size()-2, aes_key, aes_iv);
 
-    AesCbcDecryptWithKey(aes_key, 16, aes_iv, argus.data() + 2, output.data(), output.size());
-
-    ByteBuf ba((const uint8_t *)output.data(), output.size());
-    ba.remove_padding();
-    std::cout << "aes result remove padding: \n" << Hexdump(ba.data(), ba.size()) << std::endl;
+    std::cout << "aes result remove padding: \n" << Hexdump(output.data(), output.size()) << std::endl;
     // 第一个字节是0x35(真机)或者0xa6(unidbg), 不确定怎么来的, 步骤很多
     // 再后面四个字节是 random 的数据, 不知道干嘛用的
     // 再后面四个字节是 (01 02 0c 18) (01 d0 06 18) (01 d0 0f 18), 不确定怎么来的
     // 数据
     // 倒数2个字节是随机数高位
 
-    uint32_t len = ba.size();
-    uint16_t rand_left = *(uint16_t *)&ba.data()[len - 2];
+    uint32_t len = output.size();
+    uint16_t rand_left = *(uint16_t *)&output.data()[len - 2];
 
     uint32_t random_num = rand_left;
     random_num = random_num << 16 | rand_right;
@@ -98,7 +119,7 @@ int decrypt_argus(const char *x_argus) {
 
     uint32_t bsize = len-9-2;
     auto *b_buffer = new uint8_t[bsize];
-    memcpy(b_buffer, &ba.data()[9], bsize);
+    memcpy(b_buffer, &output.data()[9], bsize);
 
     std::cout << "enc_pb 解密前:\n" << Hexdump(b_buffer, bsize) << std::endl;
     decrypt_enc_pb(b_buffer, bsize);
@@ -138,15 +159,6 @@ int decrypt_argus(const char *x_argus) {
     return 0;
 }
 
-uint32_t padding_size(uint32_t size) {
-    uint32_t mod = size % 16;
-    if (mod > 0) {
-        return size + (16 - mod);
-    }
-    return size;
-//    uint32_t loop_count = (size / 16) + (size % 16 > 0 ? 1 : 0);
-//    return loop_count * 16;
-}
 
 std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
 

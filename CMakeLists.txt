@@ -3,6 +3,14 @@ project(algorithm)
 
 set(CMAKE_CXX_STANDARD 23)
 
-include_directories(include)
+find_package(Protobuf REQUIRED)
 
-add_executable(algorithm main.cpp ladon.cpp md5.c base64.cpp simon.c sm3.c WjCryptLib_Aes.c WjCryptLib_AesCbc.c argus.cpp ByteBuf.cpp pkcs7_padding.c)
+
+include_directories(include)
+include_directories(crypto)
+
+add_executable(algorithm main.cpp ladon.cpp md5.c base64.cpp simon.c sm3.c argus.cpp ByteBuf.cpp pkcs7_padding.c crypto/aes.c)
+
+#target_link_libraries(algorithm
+#        Protobuf::libprotobuf
+#        )
