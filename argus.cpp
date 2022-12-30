@@ -162,14 +162,14 @@ int decrypt_argus(const char *x_argus) {
 
 std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
 
-//    auto sign_key = base64_decode(std::string("jr36OAbsxc7nlCPmAp7YJUC8Ihi7fq73HLaR96qKovU="));
-    auto sign_key = base64_decode(std::string("rBrarpWnr5SlEUqzs6l92ABQqgo5MUxAUoyuyVJWwow="));
+    auto sign_key = base64_decode(std::string("jr36OAbsxc7nlCPmAp7YJUC8Ihi7fq73HLaR96qKovU="));
+//    auto sign_key = base64_decode(std::string("rBrarpWnr5SlEUqzs6l92ABQqgo5MUxAUoyuyVJWwow="));
     uint8_t aes_key[16] = {0};
     uint8_t aes_iv[16] = {0};
     md5((uint8_t *)sign_key.data(), 16, aes_key);
     md5((uint8_t *)sign_key.data() + 16, 16, aes_iv);
 
-    uint32_t random_num = 0x33334444;
+    uint32_t random_num = 0x29955356;
 
     // sm3(sign_key + random + sign_key)
     auto size = sign_key.size() + 4 + sign_key.size();
@@ -188,23 +188,17 @@ std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
     memcpy(byteBuf.data(), protobuf, protobuf_size);
 
     pkcs7_padding_pad_buffer(byteBuf.data(), protobuf_size, buffer_size, 16);
-    std::cout << "padding protobuf buffer" << Hexdump(byteBuf.data(), buffer_size) << std::endl;
-
+    std::cout << "padding protobuf buffer\n" << Hexdump(byteBuf.data(), buffer_size) << std::endl;
     for (int i = 0; i < (buffer_size/16); ++i) {
-        uint64_t ct[2] = {0, 0};
-        uint64_t pt[2] = {0, 0}; // 加密填充这个
-
-        memcpy(&pt[0], &byteBuf.data()[i * 16], 8);
-        memcpy(&pt[1], &byteBuf.data()[i * 16 + 8], 8);
-
-        uint8_t line[16];
+        uint64_t *ptr = (uint64_t *)&byteBuf.data()[i * 16];
+        uint64_t ct[2] = {0, 0}; // 解密填充这个
+        uint64_t pt[2] = {ptr[0], ptr[1]}; // 加密填充这个
         simon_enc(pt, ct, key);
-
-        memcpy(&line[0], &ct[0], 8);
-        memcpy(&line[8], &ct[1], 8);
-
-        std::cout << Hexdump(line, 16) << std::endl;
+        memcpy(&byteBuf.data()[i * 16], &ct[0], 8);
+        memcpy(&byteBuf.data()[i * 16 + 8], &ct[1], 8);
     }
+
+    std::cout << "protobuf enc:\n" << Hexdump(byteBuf.data(), buffer_size) << std::endl;
 
     return "";
 }
