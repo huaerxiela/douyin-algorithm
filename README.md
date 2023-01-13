@@ -13,7 +13,7 @@
 
 ## com.ss.android.ugc.aweme 23.3.0
 
-从 douyin_23.3.0 开始后面的版本多了两个参数 `X-Helios`, `X-Medusa`
+从 douyin_23.3.0 开始变成6神了，新版本多了两个参数 `X-Helios`, `X-Medusa`
 
 - [ ] `X-Helios`
 - [ ] `X-Medusa`
