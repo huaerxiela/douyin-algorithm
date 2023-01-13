@@ -3,9 +3,6 @@ project(algorithm)
 
 set(CMAKE_CXX_STANDARD 23)
 
-find_package(Protobuf REQUIRED)
-
-
 include_directories(include)
 include_directories(crypto)
 
@@ -21,7 +18,3 @@ add_executable(algorithm
         ByteBuf.cpp
         crypto/pkcs7_padding.c
         crypto/aes.c)
-
-#target_link_libraries(algorithm
-#        Protobuf::libprotobuf
-#        )

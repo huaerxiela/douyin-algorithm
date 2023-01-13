@@ -4,7 +4,6 @@
 
 #include <cstdint>
 #include <string>
-#include "common.h"
 
 extern "C" {
 #include "crypto/md5.h"
@@ -28,6 +27,8 @@ template<class T> void set_type_data(const uint8_t *ptr, int index, T data) {
     *(T *)(ptr + offset) = data;
 }
 
+template uint64_t get_type_data(const uint8_t *ptr, int index);
+template void set_type_data(const uint8_t *ptr, int index, uint64_t data);
 
 std::string bytes_to_hex_string(const uint8_t *data, uint32_t data_length) {
     char const hex_chars[16] = {
@@ -48,4 +49,13 @@ std::string md5bytes(uint8_t *data, uint32_t size) {
     md5Update(&ctx, data, size);
     md5Finalize(&ctx);
     return bytes_to_hex_string(ctx.digest, 16);
+}
+
+int md5(uint8_t *data, uint32_t size, uint8_t result[16]) {
+    MD5Context ctx;
+    md5Init(&ctx);
+    md5Update(&ctx, data, size);
+    md5Finalize(&ctx);
+    memcpy(result, ctx.digest, 16);
+    return 0;
 }

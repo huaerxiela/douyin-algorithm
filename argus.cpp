@@ -9,7 +9,6 @@
 #include <iostream>
 #include "common.h"
 extern "C" {
-#include "md5.h"
 #include "sm3.h"
 #include "simon.h"
 #include "pkcs7_padding.h"
@@ -23,14 +22,6 @@ extern "C" {
 #include "ByteBuf.hpp"
 #include "ByteBuf.h"
 
-int md5(uint8_t *data, uint32_t size, uint8_t result[16]) {
-    MD5Context ctx;
-    md5Init(&ctx);
-    md5Update(&ctx, data, size);
-    md5Finalize(&ctx);
-    memcpy(result, ctx.digest, 16);
-    return 0;
-}
 
 int encrypt_enc_pb(const uint8_t *encode_pb, uint32_t size, const uint8_t xor_array[8]) {
     auto *buffer = new uint8_t[size + 8];
@@ -183,6 +174,5 @@ std::string encrypt_argus(const uint8_t *protobuf, uint32_t protobuf_size) {
     }
 
     std::cout << "protobuf enc:\n" << Hexdump(byteBuf.data(), buffer_size) << std::endl;
-
     return "";
 }
