@@ -1,12 +1,8 @@
-#include <iostream>
+
 #include <list>
-#include <queue>
-#include "base64.h"
 #include "argus.h"
 #include "defs.h"
 #include "ladon.h"
-#include "aes.hpp"
-#include "hexdump.hpp"
 extern "C"
 #include "crypto/pkcs7_padding.h"
 
@@ -23,6 +19,7 @@ int show_size() {
 }
 
 
+// 生成 simon table
 int gen_table(const uint64_t args[4]) {
     uint64_t array[72 + 4] = {0};
     for (int i = 0; i < 4; ++i) {
@@ -43,7 +40,7 @@ int gen_table(const uint64_t args[4]) {
 }
 
 
-// 生成出来是等价的
+// 生成出来的table是等价的
 int test_encode() {
 //    uint64_t array[] = {
 //            0xd743168ff0c465a4,
@@ -66,7 +63,7 @@ int test_encode() {
     return 0;
 }
 
-// 得到异或的数，和手机生成的完全一样。
+// 得到异或的数，argus 里的。
 int get_random() {
     // 0x29955356L FF FB 57 47
     // 0x11223344L FF FE EF CD
@@ -94,13 +91,7 @@ int get_random() {
     return 0;
 }
 
-int test_ladon() {
-    std::string ladon = make_ladon(1670385975);
-    std::cout << "ladon " << ladon << std::endl;
-    return 0;
-}
-
-int test_argus() {
+int test_decrypt_argus() {
     const char *argus[] = {
             "wni3DJwEiI+HxHUBV7pRPrlbBVHGWB0RLrn7nDZpkgT/7b7yUnNoVRYNacd+enlrqS/1/SJZ5peIWg8VIVaXj0mgYHLjK0rGwozg+11YG1QIFo8ABvRjVgo19d2zk2s8Kl8Tuvw5xpScKcTRHW9KpX5IiCTxo/YVdDXipJFgiI/41XgVLQ6Xeb6idXWLtCyt7k/Qt54B50bT1hQ5VcVy0pZufF/4/4Ehd1+L7sHBBHQQsA==",
 //            "VlMKbTQsAIy4ORbvTJviXPX7vhiGcmQPBKnlyYShf0cwJ4voq++9uwan82uPkQ/I6NhvUA5jCq5QVddN0gEIcTIpKicQVVTHQVwDv33Inn1RFCpK3/DA8TRhaeF4hFSrtlFMb4DFMOqA976S6yrPxgeSdWr9DI9EwYhbyNSGX9RHRW5YKSckBS0JrDK/B2Iv2R4WcIt5WkVwu8a+3WmQHaxXMXvpzAZiVtzuXxI8SNJZ6gIk62MIXOOIZEA3BHxFUQJNyIuG5UETTukp2HieOFc8",
@@ -114,40 +105,21 @@ int test_argus() {
     return 0;
 }
 
-
-void test_aes_cbc_decrypt() {
-
-//    uint8_t data[] = {
-//            0x5d,0x87,0x43,0xe5,0xc6,0x68,0x3b,0x38,0x6a,0x40,0xd8,0x1e,0x72,0xac,0x50,0x7b
-//    };
-//    const char *key_iv = "0000000000000000";
-//    uint8_t *key = (uint8_t*)key_iv;
-//    uint8_t *iv = (uint8_t*)key_iv;
-//    AES_ctx ctx;
-//    AES_init_ctx_iv(&ctx, key, iv);
-//    AES_CBC_decrypt_buffer(&ctx, data, 16);
-
-
-    uint8_t buffer[32] = {0x31};
-
-
-    std::cout << Hexdump(buffer, sizeof buffer) << std::endl;
-
-    pkcs7_padding_pad_buffer(buffer, 1, 15, 16);
-
-
-    std::cout << Hexdump(buffer, sizeof buffer) << std::endl;
-
-
+int test_ladon() {
+    uint32_t khronos = 1670385975;
+    uint32_t random_num = 0x4ec5e0ea;
+    const char *success_result = "6uDFTgAFgHqrawu7xugc8VuWS16SZJGK7nl6eXPoq7EltIrf";
+    std::string ladon = make_ladon(khronos, random_num);
+    if (strcmp(ladon.c_str(), success_result) != 0) {
+        printf("计算 ladon 出错\n");
+        return -1;
+    }
+    printf("ladon: %s\n", ladon.c_str());
+    return 0;
 }
 
-
-
-int main() {
-    get_random();
-//    test_argus();
-//    test_aes_cbc_decrypt();
-
+//  还未完成, 有空再弄了
+int test_encrypt_argus() {
     unsigned char protobuf[] = {
             0x08,0xd2,0xa4,0x80,0x82,0x04,0x10,0x02,0x18,0xc4,0x88,0x89,0x91,0x02,0x22,0x04,
             0x33,0x30,0x31,0x39,0x32,0x0a,0x31,0x36,0x31,0x31,0x39,0x32,0x31,0x37,0x36,0x34,
@@ -160,6 +132,17 @@ int main() {
             0x05
     };
     encrypt_argus(protobuf, sizeof(protobuf));
+    return 0;
+}
 
+int main() {
+    // 生成 ladon
+    test_ladon();
+
+    // 解密 argus
+    test_decrypt_argus();
+
+    // 生成 argus(未完成)
+//    test_encrypt_argus();
     return 0;
 }

@@ -3,43 +3,11 @@
 #include "base64.h"
 #include "hexdump.hpp"
 #include "defs.h"
+#include "common.h"
 
 extern "C" {
-#include "md5.h"
+#include "pkcs7_padding.h"
 }
-
-template<class T> T get_type_data(const uint8_t *ptr, int index) {
-    int offset = sizeof(T) * index;
-    return *(T *)(ptr + offset);
-}
-
-template<class T> void set_type_data(const uint8_t *ptr, int index, T data) {
-    int offset = sizeof(T) * index;
-    *(T *)(ptr + offset) = data;
-}
-
-
-std::string bytes_to_hex_string(const uint8_t *data, uint32_t data_length) {
-    char const hex_chars[16] = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-    };
-    std::string result;
-    for( int i = 0; i < data_length; ++i ) {
-        uint8_t byte = data[i];
-        result += hex_chars[ ( byte & 0xF0 ) >> 4 ];
-        result += hex_chars[ ( byte & 0x0F ) >> 0 ];
-    }
-    return result;
-}
-
-std::string md5bytes(uint8_t *data, uint32_t size) {
-    MD5Context ctx;
-    md5Init(&ctx);
-    md5Update(&ctx, data, size);
-    md5Finalize(&ctx);
-    return bytes_to_hex_string(ctx.digest, 16);
-}
-
 
 int encrypt_ladon_input(uint8_t *hash_table, uint8_t input[16], uint8_t output[16]) {
     auto data0 = get_type_data<uint64_t>(input, 0);
@@ -97,20 +65,21 @@ int encrypt_ladon(const char *md5hex, uint8_t *data, uint32_t size, uint8_t *out
 
     std::cout << Hexdump(hash_table, 272 + 16) << std::endl;
 
-    uint32_t newSize = ((size / 16) + ((size % 16) > 0 ? 1 : 0)) * 16;
-    auto *newInput = new uint8_t[newSize];
-    memset(newInput, 0x06, newSize); // 0x06填充
-    memcpy(newInput, data, size);
+    uint32_t newSize = padding_size(size);
+
+    std::string input;
+    input.resize(newSize);
+    memcpy(input.data(), data, size);
+    pkcs7_padding_pad_buffer(reinterpret_cast<uint8_t *>(input.data()), size, newSize, 16);
 
     for (int i = 0; i < newSize / 16; ++i) {
-        encrypt_ladon_input(hash_table, &newInput[i * 16], &output[i * 16]);
+        encrypt_ladon_input(hash_table, &((uint8_t*)input.data())[i * 16], &output[i * 16]);
     }
     std::cout << Hexdump(output, newSize) << std::endl;
     return 0;
 }
 
-std::string make_ladon(uint32_t khronos) {
-    uint32_t random_num = 0x4ec5e0ea;
+std::string make_ladon(uint32_t khronos, uint32_t random_num) {
     char data[32] = {0};
     std::snprintf(data, sizeof data, "%u-1588093228-1128", khronos);
 
@@ -119,9 +88,9 @@ std::string make_ladon(uint32_t khronos) {
     auto md5hex = md5bytes(keygen, 8);
 
     uint32_t size = strlen(data);
-    uint32_t newSize = ((size / 16) + ((size % 16) > 0 ? 1 : 0)) * 16;
+    uint32_t newSize = padding_size(size);
 
-    // 扩展加随机数据
+    // 随机数 + 加密数据
     auto *output = new uint8_t[newSize + 4];
     memcpy(output, &random_num, sizeof random_num);
     encrypt_ladon(md5hex.c_str(), (uint8_t *) data, size, &output[4]);

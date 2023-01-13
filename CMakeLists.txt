@@ -11,6 +11,7 @@ include_directories(crypto)
 
 add_executable(algorithm
         main.cpp
+        common.cpp
         ladon.cpp
         crypto/md5.c
         crypto/base64.cpp

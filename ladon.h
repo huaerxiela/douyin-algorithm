@@ -7,6 +7,6 @@
 
 #include <string>
 
-std::string make_ladon(uint32_t khronos);
+std::string make_ladon(uint32_t khronos, uint32_t random_num);
 
 #endif //ALGORITHM_LADON_H

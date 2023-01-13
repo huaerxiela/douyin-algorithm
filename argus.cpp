@@ -7,6 +7,7 @@
 #include "hexdump.hpp"
 #include <string>
 #include <iostream>
+#include "common.h"
 extern "C" {
 #include "md5.h"
 #include "sm3.h"
@@ -43,14 +44,6 @@ int encrypt_enc_pb(const uint8_t *encode_pb, uint32_t size, const uint8_t xor_ar
     return 0;
 }
 
-uint8_t *memdup(uint8_t *data, uint32_t size) {
-    auto buf = new uint8_t[size];
-    memcpy(buf, data, size);
-    return buf;
-}
-
-
-// 有问题
 int decrypt_enc_pb(uint8_t *data, uint32_t len) {
     // 后8位
     ByteBuf ba(&data[len-8], 8);
@@ -63,15 +56,6 @@ int decrypt_enc_pb(uint8_t *data, uint32_t len) {
     std::reverse(data, data+len);
     encrypt_enc_pb(&data[8], len-8, ba.data());
     return 0;
-}
-
-
-uint32_t padding_size(uint32_t size) {
-    uint32_t mod = size % 16;
-    if (mod > 0) {
-        return size + (16 - mod);
-    }
-    return size;
 }
 
 std::string aes_cbc_decrypt(uint8_t *data, uint32_t len, uint8_t key[16], uint8_t iv[16]) {
@@ -96,6 +80,7 @@ int decrypt_argus(const char *x_argus) {
     uint16_t rand_right = *(uint16_t *)argus.data();
 
     auto sign_key = base64_decode(std::string("jr36OAbsxc7nlCPmAp7YJUC8Ihi7fq73HLaR96qKovU="));
+//    auto sign_key = base64_decode(std::string("rBrarpWnr5SlEUqzs6l92ABQqgo5MUxAUoyuyVJWwow="));
     uint8_t aes_key[16] = {0};
     uint8_t aes_iv[16] = {0};
     md5(reinterpret_cast<uint8_t *>(sign_key.data()), 16, aes_key);
@@ -104,9 +89,9 @@ int decrypt_argus(const char *x_argus) {
     std::string output = aes_cbc_decrypt(reinterpret_cast<uint8_t *>(argus.data() + 2), argus.size()-2, aes_key, aes_iv);
 
     std::cout << "aes result remove padding: \n" << Hexdump(output.data(), output.size()) << std::endl;
-    // 第一个字节是0x35(真机)或者0xa6(unidbg), 不确定怎么来的, 步骤很多
+    // 第一个字节是0x35(手机)或者0xa6(unidbg), 不确定怎么来的, 步骤很多
     // 再后面四个字节是 random 的数据, 不知道干嘛用的
-    // 再后面四个字节是 (01 02 0c 18) (01 d0 06 18) (01 d0 0f 18), 不确定怎么来的
+    // 再后面四个字节是 (01 02 0c 18) (01 d0 06 18) (01 d0 0f 18), 根据url query算来的，还没分析
     // 数据
     // 倒数2个字节是随机数高位
 
