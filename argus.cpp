@@ -70,7 +70,13 @@ int decrypt_argus(const char *x_argus) {
     auto argus = base64_decode(std::string(x_argus));
     uint16_t rand_right = *(uint16_t *)argus.data();
 
+    // douyin
     auto sign_key = base64_decode(std::string("jr36OAbsxc7nlCPmAp7YJUC8Ihi7fq73HLaR96qKovU="));
+
+    // tiktok
+//    auto sign_key = base64_decode(std::string("wC8lD4bMTxmNVwY5jSkqi3QWmrphr/58ugLko7UZgWM="));
+
+    // unidbg
 //    auto sign_key = base64_decode(std::string("rBrarpWnr5SlEUqzs6l92ABQqgo5MUxAUoyuyVJWwow="));
     uint8_t aes_key[16] = {0};
     uint8_t aes_iv[16] = {0};

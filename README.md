@@ -1,8 +1,12 @@
 # douyin-algorithm
 
-当前分析的版本是 douyin_23.2.0_arm64
+## Note
+
+Do not contact me and I will not answer any questions, It's not the Tiktok algorithm
 
 ## com.ss.android.ugc.aweme 23.2.0
+
+当前分析的版本是 douyin_23.2.0_arm64
 
 这是最后一个4神版本 `X-Ladon`, `X-Argus`, `X-Gorgon`, `X-Khronos`
 
@@ -24,7 +28,7 @@
 
 X-Ladon(生成)
 
-X-Argus(已经完成还原protobuf, 生成还没写完, 有些没数据没看出意义, 加上有其它事就没弄了)
+X-Argus(已经完成还原protobuf, 生成还没写完, 有些数据没看出意义, 加上有其它事就没弄了)
 
 X-Gorgon 还没有开始分析
 
